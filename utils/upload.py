@@ -24,25 +24,34 @@ def generate_presigned_url(s3_client, client_method, method_parameters, expires_
 
 
 def get_presigned_url():
-    s3_client = boto3.client('s3', config=boto3.session.Config(signature_version='s3v4'))
-    url = generate_presigned_url(
-        s3_client, action, {'Bucket': bucket, 'Key': key}, 3600)
-    return url
+    try:
+        s3_client = boto3.client('s3', config=boto3.session.Config(signature_version='s3v4'))
+        url = generate_presigned_url(
+            s3_client, action, {'Bucket': bucket, 'Key': key}, 3600)
+        return url
+    except Exception as e:
+        logger.exception("Error generating presigned url ", e)
+        raise e
 
 
 def upload_to_s3(url, local_filepath):
-    logger.info("Using the Requests package to send a request to the URL.")
     response = None
     logger.info("Putting data to the URL.")
+
     try:
         with open(local_filepath, 'r') as object_file:
             object_text = object_file.read()
         response = requests.put(url, data=object_text)
-    except FileNotFoundError:
-        logger.info(f"Couldn't find {local_filepath}. For a PUT operation, the key must be the name of a file that "
-                    f"exists on your computer.")
-
-    if response is not None:
-        logger.info("Got response:")
         logger.info(f"Status: {response.status_code}")
         logger.info(response.text)
+        response.raise_for_status()  # raises exception for non 2xx responses
+
+    except FileNotFoundError:
+        logger.exception(
+            f"Couldn't find {local_filepath}. For a PUT operation, the key must be the name of a file that "
+            f"exists on your computer.")
+        raise FileNotFoundError
+
+    except Exception as e:
+        logger.error(f"Failed to upload file at {local_filepath} to s3", e)
+        raise e

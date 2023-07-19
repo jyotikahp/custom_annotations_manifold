@@ -15,7 +15,7 @@ def add_custom_annotations(schema_change, local_filepath):
 
     lambda_client = boto3.client('lambda', region_name=DEFAULT_REGION)
     try:
-        response=lambda_client.invoke(
+        response = lambda_client.invoke(
             FunctionName=custom_annotations_lambda,
             InvocationType='Event',
             Payload=json.dumps(schema_change)
