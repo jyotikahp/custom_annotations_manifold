@@ -1,8 +1,6 @@
 import boto3
 import json
-
 from botocore.exceptions import ClientError
-
 from utils.upload import upload_to_s3, get_presigned_url
 from utils.config import custom_annotations_lambda, DEFAULT_REGION
 import logging
